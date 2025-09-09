@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, Self, TypeVar, cast
 import backoff
 from pymodbus.exceptions import ConnectionException as ModbusConnectionException
 from pymodbus.framer import FramerRTU
-from pymodbus.pdu import ExceptionResponse, ModbusPDU
+from pymodbus.pdu import ExceptionResponse, ModbusPDU, mei_message
 from pymodbus.pdu.register_message import (
     WriteMultipleRegistersResponse,
     WriteSingleRegisterResponse,
@@ -446,12 +446,20 @@ class AsyncHuaweiSolar:
         objects = {}
 
         while next_object_id is not None:
+            # response = await self._client.execute(
+            #     no_response_expected=False,
+            #     request=ReadDeviceIdentifierRequest(
+            #         read_dev_id_code=read_dev_id_code,
+            #         object_id=next_object_id,
+            #     ),
+            # )
+            rq = mei_message.ReadDeviceInformationRequest(
+                read_code=read_dev_id_code,
+                object_id=next_object_id,
+            )
             response = await self._client.execute(
                 no_response_expected=False,
-                request=ReadDeviceIdentifierRequest(
-                    read_dev_id_code=read_dev_id_code,
-                    object_id=next_object_id,
-                ),
+                request=rq,
             )
 
             if isinstance(response, ExceptionResponse):

@@ -1675,11 +1675,11 @@ SDONGLE_REGISTERS = {
     rn.SDONGLE_SIGNAL_STRENGTH_4G : U16Register(None, 1, 35264, target_device=TargetDevice.SDONGLE),
     rn.SDONGLE_SYSTEM_4G : StringRegister(35266, 10, target_device=TargetDevice.SDONGLE),
     rn.SDONGLE_CARRIER_4G: StringRegister(37440,15, target_device=TargetDevice.SDONGLE),
-    rn.SDONGLE_TOTAL_INPUT_POWER: U32Register("W", 1, 37498, target_device=TargetDevice.SDONGLE),
-    rn.SDONGLE_LOAD_POWER: U32Register("W", 1, 37500, target_device=TargetDevice.SDONGLE),
-    rn.SDONGLE_GRID_POWER: I32Register("W", 1, 37502, target_device=TargetDevice.SDONGLE),  # positive is importing, negative is exporting
-    rn.SDONGLE_TOTAL_BATTERY_POWER: I32Register("W", 1, 37504, target_device=TargetDevice.SDONGLE),  # positive is charging, negative is discharging
-    rn.SDONGLE_TOTAL_ACTIVE_POWER: I32Register("W", 1, 37516, target_device=TargetDevice.SDONGLE),
+    rn.SDONGLE_TOTAL_INPUT_POWER: U32Register("kW", 1000, 37498, target_device=TargetDevice.SDONGLE),
+    rn.SDONGLE_LOAD_POWER: U32Register("kW", 1000, 37500, target_device=TargetDevice.SDONGLE),
+    rn.SDONGLE_GRID_POWER: I32Register("kW", 1000, 37502, target_device=TargetDevice.SDONGLE),  # positive is importing, negative is exporting
+    rn.SDONGLE_TOTAL_BATTERY_POWER: I32Register("kW", 1000, 37504, target_device=TargetDevice.SDONGLE),  # positive is charging, negative is discharging
+    rn.SDONGLE_TOTAL_ACTIVE_POWER: I32Register("kW", 1000, 37516, target_device=TargetDevice.SDONGLE),
     rn.SDONGLE_RESET: U16Register(None, 1, 40205, target_device=TargetDevice.SDONGLE,readable=False, writeable=True),
     # rn.SDONGLE_SYSTEM_TIME: Epochtime(40500, 2, target_device=TargetDevice.SDONGLE),
     rn.SDONGLE_APPLICATION_LAYER_HEARTBEAT_PERIOD: U16Register("min", 1, 43064, target_device=TargetDevice.SDONGLE, writeable=True),
@@ -1698,9 +1698,9 @@ SDONGLE_REGISTERS = {
     rn.SDONGLE_TRAFFIC_PACKAGE_4G: U32Register("MB", 2, 43564, target_device=TargetDevice.SDONGLE, writeable=True),
     rn.SDONGLE_MONTHLY_USED_TRAFFIC_CORRECTION_4G: U32Register("MB", 2, 43566, target_device=TargetDevice.SDONGLE),
     rn.SDONGLE_CONNECTION_PORT: U16Register(rv.SDongleConnectionPort, 1, 45038, target_device=TargetDevice.SDONGLE,readable=False, writeable=True),
-    rn.SDONGLE_DEVICE_OPERATION_SN : StringRegister(47402,11, target_device=TargetDevice.SDONGLE,readable=False, writeable=True),
-    rn.SDONGLE_DEVICE_OPERATION_COMMAND : StringRegister(47412,1, target_device=TargetDevice.SDONGLE,readable=False, writeable=True),
-    rn.SDONGLE_START_DEVICE_SEARCH: U16Register(None, 1, 47413, target_device=TargetDevice.SDONGLE,readable=False,writeable=True),
+    rn.SDONGLE_DEVICE_OPERATION_SN : StringRegister(47402,10, target_device=TargetDevice.SDONGLE),
+    rn.SDONGLE_DEVICE_OPERATION_COMMAND : StringRegister(47412,1, target_device=TargetDevice.SDONGLE),
+    rn.SDONGLE_START_DEVICE_SEARCH: U16Register(None, 1, 47413, target_device=TargetDevice.SDONGLE),
 }
 
 REGISTERS.update(SDONGLE_REGISTERS)

@@ -753,9 +753,9 @@ class EmmaConsiderMainsFaultyIf(IntEnum):
 class SDongleType(_IntEnumWithPrettyString):
     """SDongle Type."""
 
-    NONE = 1
+    NA = 1
     WLAN = 2
-    A_4G = 3
+    _4G = 3
     WLAN_FE = 4
 
 class SDongleDeviceSearchStatus(IntEnum):
