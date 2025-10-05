@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 async def test():
     """Run test."""
-    bridge = await create_tcp_bridge(host="192.168.10.2", port=502, slave_id=100)
+    bridge = await create_tcp_bridge(host="192.168.10.2", port=502, slave_id=0)
     # await bridge.has_write_permission()
 
     # assert isinstance(bridge, HuaweiSUN2000Bridge)
@@ -46,6 +46,7 @@ async def test():
     print(await bridge.client.get(rn.SDONGLE_TOTAL_ACTIVE_POWER))
     print(await bridge.client.get(rn.SDONGLE_PORT_MODE))
     print(await bridge.client.get(rn.SDONGLE_NTP_TIME_SYNCHRONIZATION))
+    # print(await bridge.client.get(rn.me))
     # result: dict[str, Any] = {
     #         "model_name": bridge.model_name,
     #         "serial_number": bridge.serial_number,
