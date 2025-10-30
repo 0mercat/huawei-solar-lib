@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 async def test():
     """Run test."""
-    bridge = await create_tcp_bridge(host="192.168.10.2", port=502, slave_id=0)
+    bridge = await create_tcp_bridge(host="192.168.0.2", port=502, slave_id=1)
     # await bridge.has_write_permission()
 
     # assert isinstance(bridge, HuaweiSUN2000Bridge)

@@ -43,56 +43,6 @@ _LOGGER = logging.getLogger(__name__)
 HEARTBEAT_INTERVAL = 15
 
 
-@dataclass(frozen=True)
-class HuaweiSolarProductInfo:
-    """Contains information on Huawei Solar Product."""
-
-    model_name: str
-    serial_number: str
-    product_number: str
-    firmware_version: str
-    software_version: str
-    sdongle_type: str | None = None
-    sdongle_sn: str | None = None
-
-    @classmethod
-    async def retrieve_from_device(cls, client: AsyncHuaweiSolar, slave_id: int) -> Self:
-        """Retrieve product info from device."""
-        (
-            model_name_result,
-            serial_number_result,
-            pn_result,
-            firmware_version_result,
-            software_version_result,
-        ) = await client.get_multiple(
-            [
-                rn.MODEL_NAME,
-                rn.SERIAL_NUMBER,
-                rn.PN,
-                rn.FIRMWARE_VERSION,
-                rn.SOFTWARE_VERSION,
-            ],
-            slave_id,
-        )
-
-        try:
-            sdongle_type = await client.get(rn.SDONGLE_TYPE, slave_id)
-            sdongle_type = sdongle_type.value
-            print(sdongle_type)
-
-        except:
-            sdongle_type = None
-
-        return cls(
-            model_name=model_name_result.value,
-            serial_number=serial_number_result.value,
-            product_number=pn_result.value,
-            firmware_version=firmware_version_result.value,
-            software_version=software_version_result.value,
-            sdongle_type=sdongle_type,
-        )
-
-
 class HuaweiSolarBridge(ABC):
     """A higher-level interface making it easier to interact with a Huawei Solar inverter."""
 
@@ -115,6 +65,7 @@ class HuaweiSolarBridge(ABC):
         update_lock: asyncio.Lock | None = None,
         *,
         connected_via_emma: bool = False,
+        sdongle_type: int = None,
         connected_via_sdongle: bool = False
     ) -> None:
         """DO NOT USE THIS CONSTRUCTOR DIRECTLY. Use create() method instead."""
@@ -123,14 +74,8 @@ class HuaweiSolarBridge(ABC):
         self.model_name = model_name
         self.update_lock = update_lock or asyncio.Lock()
         self.connected_via_emma = connected_via_emma
+        self.sdongle_type = sdongle_type,
         self.connected_via_sdongle = connected_via_sdongle
-
-        self.model_name = product_info.model_name
-        self.serial_number = product_info.serial_number
-        self.product_number = product_info.product_number
-        self.firmware_version = product_info.firmware_version
-        self.software_version = product_info.software_version
-
         self._primary = slave_id == client.slave_id
 
     @classmethod
@@ -142,7 +87,8 @@ class HuaweiSolarBridge(ABC):
         update_lock: asyncio.Lock | None,
         *,
         connected_via_emma: bool = False,
-        connected_via_sdongle = False
+        sdongle_type:int = None,
+        connected_via_sdongle:bool = False
     ) -> Self:
         """Create instance with the necessary information."""
         bridge = cls(
@@ -151,6 +97,7 @@ class HuaweiSolarBridge(ABC):
             model_name,
             update_lock,
             connected_via_emma=connected_via_emma,
+            sdongle_type = sdongle_type,
             connected_via_sdongle = connected_via_sdongle
         )
 
@@ -165,7 +112,7 @@ class HuaweiSolarBridge(ABC):
 
     @classmethod
     @abstractmethod
-    def supports_device(cls, model_name: str) -> bool:
+    def supports_device(cls, model_name: str, sdongle_type: int = None) -> bool:
         """Check if this class support the given device."""
         raise NotImplementedError
 
@@ -441,7 +388,7 @@ class HuaweiSUN2000Bridge(HuaweiSolarBridge):
     _previous_device_status: str | None = None
 
     @classmethod
-    def supports_device(cls, model_name: str) -> bool:
+    def supports_device(cls, model_name: str, sdongle_type: int = None) -> bool:
         """Check if this class support the given device."""
         return model_name.startswith(
             (
@@ -687,7 +634,7 @@ class HuaweiEMMABridge(HuaweiSolarBridge):
     model: str
 
     @classmethod
-    def supports_device(cls, model_name: str) -> bool:
+    def supports_device(cls, model_name: str, sdongle_type: int) -> bool:
         """Check if this class support the given device."""
         return model_name.startswith("SmartHEMS")
 
@@ -715,10 +662,9 @@ class HuaweiSdongleBridge(HuaweiSolarBridge):
     """Bridge for Huawei SDongle devices."""
 
     @classmethod
-    def supports_device(cls, product_info: HuaweiSolarProductInfo) -> bool:
+    def supports_device(cls, model_name: str, sdongle_type: int) -> bool:
         """Check if this class support the given device."""
-        # if (product_info.sdongle_type in [1,2,3,4]):
-        if (product_info.sdongle_type in [1,2,3,4]):          # ['Na','Wlan','A 4g','Wlan fe']
+        if (sdongle_type in [1,2,3,4]):          # ['Na','Wlan','A 4g','Wlan fe']
             return True
         return False
 
@@ -730,7 +676,7 @@ class HuaweiSdongleBridge(HuaweiSolarBridge):
         sdongle_type_code = (await self.client.get(rn.SDONGLE_TYPE, self.slave_id)).value
         sdongle_type = str(rv.SDongleType(sdongle_type_code))
         self.model = "SDongle " + sdongle_type
-        print(self.model)
+        # print(self.model)
         
 
 class HuaweiChargerBridge(HuaweiSolarBridge):
@@ -741,7 +687,7 @@ class HuaweiChargerBridge(HuaweiSolarBridge):
     model: str
 
     @classmethod
-    def supports_device(cls, model_name: str) -> bool:
+    def supports_device(cls, model_name: str, sdongle_type: int) -> bool:
         """Check if this class support the given device."""
         return model_name.startswith("SCharger")
 
@@ -762,7 +708,7 @@ class HuaweiChargerBridge(HuaweiSolarBridge):
         self.model = (await self.client.get(rn.CHARGER_MODEL, self.slave_id)).value
 
 
-BRIDGE_CLASSES: list[type[HuaweiSolarBridge]] = [HuaweiSUN2000Bridge, HuaweiEMMABridge, HuaweiChargerBridge, HuaweiSdongleBridge]
+BRIDGE_CLASSES: list[type[HuaweiSolarBridge]] = [HuaweiSdongleBridge, HuaweiSUN2000Bridge, HuaweiEMMABridge, HuaweiChargerBridge]
 
 
 async def create_tcp_bridge(
@@ -806,18 +752,28 @@ async def _create(
     connected_via_emma: bool = False,
     connected_via_sdongle: bool = False
 ) -> HuaweiSolarBridge:
-    model_name_result = await client.get(rn.MODEL_NAME, slave_id)
-    model_name = model_name_result.value
+    try:
+            model_name_result = await client.get(rn.MODEL_NAME, slave_id)
+            model_name = model_name_result.value
+    except:
+            model_name = ""            #probably sdongle
+
+    try:
+            sdongle_type = await client.get(rn.SDONGLE_TYPE, slave_id)
+            sdongle_type = sdongle_type.value
+    except:
+            sdongle_type = None
 
     for candidate_bridge_class in BRIDGE_CLASSES:
-        if candidate_bridge_class.supports_device(model_name):
+        if candidate_bridge_class.supports_device(model_name,sdongle_type):
             return await candidate_bridge_class.create(
                 client,
                 slave_id,
                 model_name,
                 update_lock,
-                connected_via_emma=connected_via_emma,
-                connected_via_sdongle=connected_via_sdongle
+                connected_via_emma = connected_via_emma,
+                sdongle_type= sdongle_type,
+                connected_via_sdongle = connected_via_sdongle,
             )
 
     _LOGGER.warning("Unknown product model '%s'. Defaulting to a SUN2000 device.", model_name)
@@ -826,4 +782,7 @@ async def _create(
         slave_id,
         model_name,
         update_lock,
+        connected_via_emma = connected_via_emma,
+        sdongle_type= sdongle_type,
+        connected_via_sdongle = connected_via_sdongle,
     )
